@@ -1,25 +1,28 @@
-class Air {
-    constructor(x, y, w, h) {
+class Block {
+    constructor(x, y, w, h, passable) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
-        this.passable = true;
+        this.passable = passable;
+    }
+}
+
+class Air extends Block {
+    constructor(x, y, w, h) {
+        super(x, y, w, h, true);
     }
     render() {};
 }
 
-class Dirt {
+class Dirt extends Block {
     constructor(x, y, w, h) {
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
-        this.passable = false;
-        this.grassed = [false, false, false, false];
-        // for (let x=0; x<4; x++) {
-        //     this.grassed.push(Math.random()>0.5);
-        // }
+        super(x, y, w, h, false)
+        // this.grassed = [false, false, false, false];
+        this.grassed = [];
+        for (let x=0; x<4; x++) {
+            this.grassed.push(Math.random()>0.5);
+        }
     }
     render() {
         // ctx.strokeRect(this.x * boxW, this.y * boxH, this.w, this.h)
@@ -39,5 +42,16 @@ class Dirt {
                 }
             }
         }
+    }
+}
+
+class Boundary extends Block{
+    constructor(x, y, w, h) {
+        super(x, y, w, h, false);
+    }
+    render() {
+        // console.log('rendering');
+        ctx.fillStyle = 'black';
+        ctx.fillRect(this.x * boxW, this.y * boxH, this.w, this.h);
     }
 }

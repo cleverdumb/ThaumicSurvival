@@ -1,18 +1,21 @@
 const cvs = document.getElementById('cvs');
 const ctx = cvs.getContext('2d');
 
-const cx = 800;
+const cx = 900;
 const cy = 600;
 
 let boxW = 20, boxH = 20;
+
+let worldX = 500;
+let worldY = 300;
 
 cvs.width = cx;
 cvs.height = cy;
 cvs.style.border = '1px solid black';
 
 let pl = {
-    x: 650,
-    y: 200,
+    x: 100,
+    y: 300,
     w: 20,
     h: 40,
     ax: 0,
@@ -39,10 +42,13 @@ let entities = [];
 
 let grid = [];
 
-for (let y=0; y<30; y++) {
+for (let y=0; y<worldY; y++) {
     grid.push([]);
-    for (let x=0; x<40; x++) {
-        if (y == 25) {
+    for (let x=0; x<worldX; x++) {
+        if (x == 0 || x == worldX-1 || y == 0 || y == worldY-1) {
+            grid[y].push(new Boundary(x, y, boxW, boxH));
+        }
+        else if (y >= 25) {
             grid[y].push(new Dirt(x, y, boxW, boxH));
         }
         else {
@@ -168,19 +174,57 @@ function plTick() {
     //     pl.ground = false;
     // }
 
-    grid.forEach(y=>{
-        y.forEach(x=>{
-            if (!x.passable) {
-                resolveCollision(pl, x.x * boxW, x.y * boxH, x.x * boxW + x.w, x.y * boxH + x.h);
+    // grid.forEach(y=>{
+    //     y.forEach(x=>{
+    //         if (!x.passable) {
+    //             resolveCollision(pl, x.x * boxW, x.y * boxH, x.x * boxW + x.w, x.y * boxH + x.h);
+    //         }
+    //     })
+    // })
+
+    let bottomBlockX = Math.floor(pl.x/boxW);
+    let bottomBlockY = Math.floor((pl.y + pl.h/2)/boxH);
+
+    for (let y=Math.max(0, bottomBlockY - 3); y<Math.min(worldY, bottomBlockY + 3); y++) {
+        for (let x=Math.max(0, bottomBlockX - 3); x<Math.min(worldX, bottomBlockX + 3); x++) {
+            let block = grid[y][x];
+            if (!block.passable) {
+                resolveCollision(pl, block.x * boxW, block.y * boxH, block.x * boxW + block.w, block.y * boxH + block.h);
             }
-        })
-    })
+        }
+    }
 
     // resolveCollision(600, 370, 700, 420);
 }
 
 function render() {
     ctx.clearRect(0, 0, cx, cy);
+
+    let centreX, centreY;
+    if ((pl.x + pl.w/2) < (worldX*boxW/2)) {
+        // console.log('first')
+        centreX = Math.max((cx/2), (pl.x + pl.w/2));
+    }
+    else {
+        // console.log('second');
+        centreX = Math.min((worldX * boxW - cx/2), (pl.x + pl.w/2));
+    }
+
+    // console.log(centreX);
+    // console.log(cx/2, pl.x + pl.w/2);
+
+    if ((pl.y + pl.h/2) < (worldY*boxH/2)) {
+        centreY = Math.max(cy/2, (pl.y + pl.h/2));
+    }
+    else {
+        centreY = Math.min(worldY * boxH - cy/2, (pl.y + pl.h/2));
+    }
+
+    let topLeft = [Math.round(centreX - cx/2), Math.round(centreY - cy/2)];
+    let topLeftBlock = [Math.floor(topLeft[0]/boxW), Math.ceil(topLeft[1]/boxH)];
+
+    // let topLeft = [Math.max(0, parseInt(Math.round((pl.x+pl.w/2 - cx/2)*10)/10)), Math.max(0, parseInt(Math.round((pl.y+pl.h/2 - cy/2)*10)/10))];
+    // let topLeftBlock = [Math.floor(topLeft[0]/boxW), Math.ceil(topLeft[1]/boxH)];
 
     // ctx.beginPath();
     // ctx.moveTo(0, 500);
@@ -190,11 +234,26 @@ function render() {
 
     // ctx.strokeRect(600, 370, 100, 50);
 
-    grid.forEach(y=>{
-        y.forEach(x=>{
-            x.render();
-        })
-    })
+    ctx.save();
+    ctx.translate(-topLeft[0], -topLeft[1]);
+
+    // ctx.fillStyle = 'red';
+    // ctx.fillRect(topLeft[0], topLeft[1], 10, 10);
+    // ctx.fillStyle = 'black';
+
+    // grid.forEach(y=>{
+    //     y.forEach(x=>{
+    //         x.render();
+    //     })
+    // })
+
+    for (let y=0; y<=cy/boxH + 6; y++) {
+        for (let x=0; x<=cx/boxW + 6; x++) {
+            if (grid[y + topLeftBlock[1] - 3]?.[x + topLeftBlock[0] - 3]) {
+                grid[y + topLeftBlock[1] - 3]?.[x + topLeftBlock[0] - 3].render();
+            }
+        }
+    }
 
     ctx.fillStyle = 'black';
     ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
@@ -202,6 +261,8 @@ function render() {
     entities.forEach(x=>{
         x.render()
     })
+
+    ctx.restore();
 }
 
 function loop() {
@@ -213,7 +274,7 @@ function loop() {
 function init(bitmap) {
     sprites = bitmap;
 
-    new TestEntity(100, 100, 50, 50);
+    // new TestEntity(100, 100, 50, 50);
     setInterval(loop, 1000/60)
 }
 

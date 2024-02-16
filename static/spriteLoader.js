@@ -1,5 +1,5 @@
 let names = [
-    'dirt', 'RgrassOverlay',
+    'dirt', 'RgrassOverlay', 'newDirt',
     'Rtest'
 ]
 
